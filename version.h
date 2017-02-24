@@ -1,11 +1,11 @@
-#define MAJOR_VERSION_STR "16"
-#define MAJOR_VERSION_INT 16
+#define MAJOR_VERSION_STR "17"
+#define MAJOR_VERSION_INT 17
 
-#define SUB_VERSION_STR "12"
-#define SUB_VERSION_INT 12
+#define SUB_VERSION_STR "2"
+#define SUB_VERSION_INT 2
 
-#define RELEASE_NUMBER_STR "1"
-#define RELEASE_NUMBER_INT 1
+#define RELEASE_NUMBER_STR "0"
+#define RELEASE_NUMBER_INT 0
 
 #define BUILD_NUMBER_STR "0" // Build number to be sure that each result could identified.
 #define BUILD_NUMBER_INT 0
