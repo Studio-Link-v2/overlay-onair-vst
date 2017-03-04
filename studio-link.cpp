@@ -62,17 +62,18 @@ vstplugin::vstplugin(audioMasterCallback audiomaster)
 // Destructor
 vstplugin::~vstplugin()
 {
-	ua_stop_all(false);
-	sys_msleep(500);
-	ua_close();
-	conf_close();
-	baresip_close();
-	mod_close();
-	libre_close();
-	tmr_debug();
-	mem_debug();
-
-	running = false;
+	if (running) {
+		ua_stop_all(false);
+		sys_msleep(500);
+		ua_close();
+		conf_close();
+		baresip_close();
+		mod_close();
+		libre_close();
+		tmr_debug();
+		mem_debug();
+		running = false;
+	}
 }
 
 // Processing
