@@ -64,7 +64,7 @@ vstplugin::~vstplugin()
 {
 	if (running) {
 		ua_stop_all(false);
-		sys_msleep(800);
+		sys_msleep(1200);
 		ua_close();
 		conf_close();
 		baresip_close();
