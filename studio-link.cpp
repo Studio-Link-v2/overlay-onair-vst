@@ -1,5 +1,4 @@
 #include "studio-link.h"
-#include <pthread.h>
 #include "re/re.h"
 #include "baresip.h"
 
@@ -13,9 +12,9 @@
 
 #define MAX_GAIN 1
 
-pthread_t tid;
+DWORD dwThreadId;
+HANDLE hThread;
 bool running = false;
-
 
 static void ua_exit_handler(void *arg)
 {
@@ -26,6 +25,14 @@ static void ua_exit_handler(void *arg)
 	re_cancel();
 }
 
+DWORD WINAPI MyThreadFunction(LPVOID lpParam)
+{
+	re_main(NULL);
+	warning("EXIT THREAD\n");
+	return 0;
+}
+
+
 AudioEffect* createEffectInstance(audioMasterCallback audioMaster)
 {
 	return new vstplugin (audioMaster);
@@ -35,6 +42,7 @@ AudioEffect* createEffectInstance(audioMasterCallback audioMaster)
 vstplugin::vstplugin(audioMasterCallback audiomaster)
 : AudioEffectX(audioMaster, 1,3)
 {
+	DWORD dwThreadId, dwThrdParam = 1;
 	setNumInputs(2);
 	setNumOutputs(2);
 	setUniqueID(UNIQUE_ID);
@@ -53,7 +61,14 @@ vstplugin::vstplugin(audioMasterCallback audiomaster)
 				true, true, true, false);
 		conf_modules();
 		uag_set_exit_handler(ua_exit_handler, NULL);
-		pthread_create(&tid, NULL, (void*(*)(void*))&re_main, NULL);
+
+		hThread = CreateThread(
+				NULL, // default security attributes
+				0, // use default stack size
+				MyThreadFunction, // thread function
+				&dwThrdParam, // argument to thread function
+				0, // use default creation flags
+				&dwThreadId); // returns the thread identifier
 		running = true;
 	}
 	gain = 1;
@@ -64,7 +79,8 @@ vstplugin::~vstplugin()
 {
 	if (running) {
 		ua_stop_all(false);
-		sys_msleep(1200);
+		WaitForSingleObject(hThread, 2000);
+		TerminateThread(hThread, NULL);
 		ua_close();
 		conf_close();
 		baresip_close();
@@ -72,6 +88,8 @@ vstplugin::~vstplugin()
 		libre_close();
 		tmr_debug();
 		mem_debug();
+
+		CloseHandle(hThread);
 		running = false;
 	}
 }
