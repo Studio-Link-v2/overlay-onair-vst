@@ -55,7 +55,7 @@ vstplugin::vstplugin(audioMasterCallback audiomaster)
 	if (!running) {
 		(void)sys_coredump_set(true);
 		libre_init();
-		conf_configure();
+		conf_configure(false);
 		baresip_init(conf_config(), false);
 		ua_init("baresip v" BARESIP_VERSION " (" ARCH "/" OS ")",
 				true, true, true, false);
