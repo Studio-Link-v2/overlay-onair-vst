@@ -1,3 +1,4 @@
 vstsdk2.4/*
 *.dll
+*.so
 *.o
