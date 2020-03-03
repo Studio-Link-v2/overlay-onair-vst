@@ -12,8 +12,13 @@
 
 #define MAX_GAIN 1
 
+#ifdef WINDOWS
 DWORD dwThreadId;
 HANDLE hThread;
+#else
+#include <pthread.h>
+pthread_t tid;
+#endif
 bool running = false;
 
 static void ua_exit_handler(void *arg)
@@ -24,14 +29,14 @@ static void ua_exit_handler(void *arg)
 	/* The main run-loop can be stopped now */
 	re_cancel();
 }
-
+#ifdef WINDOWS
 DWORD WINAPI MyThreadFunction(LPVOID lpParam)
 {
 	re_main(NULL);
 	warning("EXIT THREAD\n");
 	return 0;
 }
-
+#endif
 
 AudioEffect* createEffectInstance(audioMasterCallback audioMaster)
 {
@@ -40,9 +45,11 @@ AudioEffect* createEffectInstance(audioMasterCallback audioMaster)
 
 // Constructor
 vstplugin::vstplugin(audioMasterCallback audiomaster)
-: AudioEffectX(audioMaster, 1,3)
+: AudioEffectX(audioMaster, 1,1)
 {
+#ifdef WINDOWS
 	DWORD dwThreadId, dwThrdParam = 1;
+#endif
 	setNumInputs(2);
 	setNumOutputs(2);
 	setUniqueID(UNIQUE_ID);
@@ -61,7 +68,7 @@ vstplugin::vstplugin(audioMasterCallback audiomaster)
 				true, true, true);
 		conf_modules();
 		uag_set_exit_handler(ua_exit_handler, NULL);
-
+#ifdef WINDOWS
 		hThread = CreateThread(
 				NULL, // default security attributes
 				0, // use default stack size
@@ -69,6 +76,10 @@ vstplugin::vstplugin(audioMasterCallback audiomaster)
 				&dwThrdParam, // argument to thread function
 				0, // use default creation flags
 				&dwThreadId); // returns the thread identifier
+#else
+		pthread_create(&tid, NULL, (void*(*)(void*))&re_main, NULL);
+#endif
+		sys_msleep(200);
 		running = true;
 	}
 	gain = 1;
@@ -79,17 +90,23 @@ vstplugin::~vstplugin()
 {
 	if (running) {
 		ua_stop_all(false);
+#ifdef WINDOWS
 		WaitForSingleObject(hThread, 2000);
 		TerminateThread(hThread, NULL);
+#else
+		sys_msleep(500);
+#endif
 		ua_close();
+		module_app_unload();
 		conf_close();
 		baresip_close();
 		mod_close();
 		libre_close();
 		tmr_debug();
 		mem_debug();
-
+#ifdef WINDOWS
 		CloseHandle(hThread);
+#endif
 		running = false;
 	}
 }
